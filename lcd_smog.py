@@ -70,7 +70,7 @@ lcd.custom_char(0, happy_face)
 lcd.custom_char(1, sad_face)
 lcd.custom_char(2, celsius)
 
-lcd.putstr("SIGNATI\nSMOG 0.13")
+lcd.putstr("SIGNATI\nSMOG 0.14")
 sleep_ms(2000)
 lcd.clear()
 
@@ -148,30 +148,34 @@ def update_lcd(_):
         last_update_epoch = mktime(tuple(int(x) for x in last_update.replace(' ','-').replace(':','-').split('-')) + (0,0))
         
         lcd.move_to(0, 0)
-        # chr(223)
-        #lcd.putstr(czas+"\nPM10: "+dane["pm10_norm"]+"% "+dane["temp"]+chr(2))
-        lcd.putstr(czas+"\nPM10: "+dane["pm10_norm"]+"% ")
-        lcd.move_to(LCD_CHARS-6, 1)
-        lcd.putstr('{:>5}'.format(dane["temp"])+chr(2))
+        lcd.putstr(czas)
         
-        if LCD_CHARS >= 20:
+        #if data from sensor are older then 5 min
+        if (now_epoch - last_update_epoch) > 900:
+            lcd.move_to(0, 1)
+            lcd.putstr('Brak akt odczytu') #16 letters
             lcd.move_to(0, 2)
-            lcd.putstr("Wilg: "+dane["hum"]+" %")
-            
+            lcd.putstr('{:<16}'.format(""))
             lcd.move_to(0, 3)
-            lcd.putstr("Cisn: "+dane["pressure"]+" mmHg")
-        
+            lcd.putstr('{:<16}'.format(""))
+        else:    
+            #chr(223) - degree symbol
+            #lcd.putstr(czas+"\nPM10: "+dane["pm10_norm"]+"% "+dane["temp"]+chr(2))
+            lcd.move_to(0, 1)
+            lcd.putstr('{:<16}'.format("PM10: "+dane["pm10_norm"]+"% "))
+            lcd.move_to(LCD_CHARS-6, 1)
+            lcd.putstr('{:>5}'.format(dane["temp"])+chr(2))
+            
+            if LCD_CHARS >= 20:
+                lcd.move_to(0, 2)
+                lcd.putstr("Wilg: "+dane["hum"]+" %")
+                
+                lcd.move_to(0, 3)
+                lcd.putstr("Cisn: "+dane["pressure"]+" mmHg")
+            
         lcd.move_to(LCD_CHARS-6, 0)
         #lcd.putstr(last_update[11:16])
         lcd.putstr('{:>6}'.format(last_update[11:16]))
-        
-        lcd.move_to(LCD_CHARS-5, 3)        
-        if (now_epoch - last_update_epoch) > 90:
-            lcd.putstr('error')
-        else:
-            lcd.putstr('     ')
-        
-        
 
 
 def schedule_update_display(_):
