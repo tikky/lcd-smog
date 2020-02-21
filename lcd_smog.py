@@ -11,7 +11,6 @@ from machine import I2C, Pin, Timer, reset
 from esp8266_i2c_lcd import I2cLcd
 
 import micropython
-import utime
 import gc
 gc.enable()
 
@@ -71,12 +70,12 @@ lcd.custom_char(0, happy_face)
 lcd.custom_char(1, sad_face)
 lcd.custom_char(2, celsius)
 
-lcd.putstr("SIGNATI\nSMOG 0.12a")
+lcd.putstr("SIGNATI\nSMOG 0.13")
 sleep_ms(2000)
 lcd.clear()
 
 def do_connect():
-    import network #, time
+    import network
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     if not wlan.isconnected():
@@ -96,25 +95,25 @@ def zfill(s, width):
     return '{:0>{w}}'.format(s, w=width)
 
 def get_from_api(url):
-    print ('Wchodze do petli')
+    print ('get_from_api')
     #lcd.move_to(LCD_CHARS-6, 0)
     #lcd.putstr("  updt")
     sleep_ms(200)
-    print ('Sprawdzam WiFI')
+    print ('... Checking WiFI WiFI')
     do_connect()
-    print ('Wchodze w TRY')
+    print ('... Starting TRY')
     try:
         response = requests.get(url, headers = {
             "Accept": "application/json"
         })
         dane = ujson.loads(response.content)
-        print ('Parsuje JSON..')
+        print ('... Parsing JSON')
         dekodowane_dane = response.json()
-        print ('Zamykam respoonse..')
+        print ('... closing response')
         response.close()
-        print ('END TRY')
+        print ('... END TRY')
     except:
-        print("Nieznany blad")
+        print("Error")
         return None
     
     #if CHIP == "ESP8266":
@@ -122,7 +121,7 @@ def get_from_api(url):
     if CHIP == "ESP32":
         wdt.feed() #feed the dog #esp32
     
-    print ('jestem za pêtl¹')
+    print ('After the loop')
     lcd.move_to(LCD_CHARS-6, 0)
     lcd.putstr("update")
     sleep_ms(200)
@@ -143,17 +142,17 @@ def update_lcd(_):
     if dane != None:
         if int(dane["pm10_norm"]) > 100:
             pass
-
+        
+        last_update = dane["date"]  #"2019-12-17 14:36:09"
+        #convert last_update from Y-m-d H:i:s to epoch
+        last_update_epoch = mktime(tuple(int(x) for x in last_update.replace(' ','-').replace(':','-').split('-')) + (0,0))
+        
         lcd.move_to(0, 0)
         # chr(223)
         #lcd.putstr(czas+"\nPM10: "+dane["pm10_norm"]+"% "+dane["temp"]+chr(2))
         lcd.putstr(czas+"\nPM10: "+dane["pm10_norm"]+"% ")
         lcd.move_to(LCD_CHARS-6, 1)
         lcd.putstr('{:>5}'.format(dane["temp"])+chr(2))
-        last_update = dane["date"]  #"2019-12-17 14:36:09"
-		
-        #convert last_update from Y-m-d H:i:s to epoch
-        last_update_epoch = mktime(tuple(int(x) for x in last_update.replace(' ','-').replace(':','-').split('-')) + (0,0))
         
         if LCD_CHARS >= 20:
             lcd.move_to(0, 2)
