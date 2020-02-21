@@ -6,7 +6,7 @@ from cet import cettime #for proper timezone
 from ntptime import settime
 import utime
 
-from time import sleep, sleep_ms, ticks_ms
+from time import sleep, sleep_ms, ticks_ms, mktime
 from machine import I2C, Pin, Timer, reset
 from esp8266_i2c_lcd import I2cLcd
 
@@ -136,6 +136,9 @@ def update_lcd(_):
     minu  = zfill(str(now[4]),2)
     secs  = zfill(str(now[5]),2)
     czas = hour + ":" + minu + ":" + secs
+    
+    #also convert current time in tuple to epoch
+    now_epoch = mktime(now)
 
     if dane != None:
         if int(dane["pm10_norm"]) > 100:
@@ -148,6 +151,9 @@ def update_lcd(_):
         lcd.move_to(LCD_CHARS-6, 1)
         lcd.putstr('{:>5}'.format(dane["temp"])+chr(2))
         last_update = dane["date"]  #"2019-12-17 14:36:09"
+		
+        #convert last_update from Y-m-d H:i:s to epoch
+        last_update_epoch = mktime(tuple(int(x) for x in last_update.replace(' ','-').replace(':','-').split('-')) + (0,0))
         
         if LCD_CHARS >= 20:
             lcd.move_to(0, 2)
@@ -159,6 +165,14 @@ def update_lcd(_):
         lcd.move_to(LCD_CHARS-6, 0)
         #lcd.putstr(last_update[11:16])
         lcd.putstr('{:>6}'.format(last_update[11:16]))
+        
+        lcd.move_to(LCD_CHARS-5, 3)        
+        if (now_epoch - last_update_epoch) > 90:
+            lcd.putstr('error')
+        else:
+            lcd.putstr('     ')
+        
+        
 
 
 def schedule_update_display(_):
