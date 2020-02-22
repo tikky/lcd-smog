@@ -1,12 +1,11 @@
 import ujson
 import urequests as requests
+import sys #to check the board type
 
 from cet import cettime #for proper timezone
-
 from ntptime import settime
-import utime
-
 from time import sleep, sleep_ms, ticks_ms, mktime
+
 from machine import I2C, Pin, Timer, reset
 from esp8266_i2c_lcd import I2cLcd
 
@@ -30,12 +29,12 @@ DEFAULT_SLA_PIN = int(cfg['DEFAULT_SLA_PIN']) #wemos 4 esp32 #21
 LCD_LINES = int(cfg['LCD_LINES']) #2 4
 LCD_CHARS = int(cfg['LCD_CHARS']) #16 20
 REFRESH_DATA = int(cfg['REFRESH_DATA']) #30 #how often to get data from api [s]
-url = cfg['URL'] #"https://192.168.6.11/smog/pomiary/api"
-CHIP = cfg['CHIP'] #ESP32
+URL = cfg['URL'] #"https://192.168.6.11/smog/pomiary/api"
+CHIP = sys.platform #cfg['CHIP']
 
 
 ## Hardware WDT for ESP32
-if CHIP == "ESP32":
+if CHIP == "esp32":
     from machine import WDT
     wdt = WDT(timeout=(REFRESH_DATA*2*1000)) #watchdog timeout [ms]
 ## END Hardware WDT
@@ -70,7 +69,7 @@ lcd.custom_char(0, happy_face)
 lcd.custom_char(1, sad_face)
 lcd.custom_char(2, celsius)
 
-lcd.putstr("SIGNATI\nSMOG 0.14")
+lcd.putstr("STERIO AirMonitor\nSMOG 0.15")
 sleep_ms(2000)
 lcd.clear()
 
@@ -94,7 +93,7 @@ def do_connect():
 def zfill(s, width):
     return '{:0>{w}}'.format(s, w=width)
 
-def get_from_api(url):
+def get_from_api(URL):
     print ('get_from_api')
     #lcd.move_to(LCD_CHARS-6, 0)
     #lcd.putstr("  updt")
@@ -103,7 +102,7 @@ def get_from_api(url):
     do_connect()
     print ('... Starting TRY')
     try:
-        response = requests.get(url, headers = {
+        response = requests.get(URL, headers = {
             "Accept": "application/json"
         })
         dane = ujson.loads(response.content)
@@ -118,7 +117,7 @@ def get_from_api(url):
     
     #if CHIP == "ESP8266":
     #    wdt_feed() #feed the dog #wemos
-    if CHIP == "ESP32":
+    if CHIP == "esp32":
         wdt.feed() #feed the dog #esp32
     
     print ('After the loop')
@@ -155,14 +154,14 @@ def update_lcd(_):
             lcd.move_to(0, 1)
             lcd.putstr('Brak akt odczytu') #16 letters
             lcd.move_to(0, 2)
-            lcd.putstr('{:<16}'.format(""))
+            lcd.putstr('{:<20}'.format(""))
             lcd.move_to(0, 3)
-            lcd.putstr('{:<16}'.format(""))
+            lcd.putstr('{:<20}'.format(""))
         else:    
             #chr(223) - degree symbol
             #lcd.putstr(czas+"\nPM10: "+dane["pm10_norm"]+"% "+dane["temp"]+chr(2))
             lcd.move_to(0, 1)
-            lcd.putstr('{:<16}'.format("PM10: "+dane["pm10_norm"]+"% "))
+            lcd.putstr('{:<20}'.format("PM10: "+dane["pm10_norm"]+"% "))
             lcd.move_to(LCD_CHARS-6, 1)
             lcd.putstr('{:>5}'.format(dane["temp"])+chr(2))
             
@@ -190,7 +189,7 @@ while True:
     try:
         settime() # just for a case set time once again
         do_connect()
-        dane = get_from_api(url) #refresh data from api
+        dane = get_from_api(URL) #refresh data from api
         sleep(REFRESH_DATA)
     except (KeyboardInterrupt, SystemExit):
         timer.deinit()
