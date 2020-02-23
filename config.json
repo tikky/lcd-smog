@@ -1,0 +1,11 @@
+{
+    "WIFI_SSID": "*****",
+    "WIFI_PASS": "*****",
+    "DEFAULT_I2C_ADDR": "0x27",
+    "DEFAULT_SCL_PIN": "22",
+    "DEFAULT_SLA_PIN": "21",
+    "LCD_LINES": "4",
+    "LCD_CHARS": "20",
+    "REFRESH_DATA": "30",
+    "URL": "https://192.168.6.11/smog/pomiary/api/3"
+}
