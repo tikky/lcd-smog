@@ -152,7 +152,7 @@ def update_lcd(_):
         #if data from sensor are older then 5 min
         if (now_epoch - last_update_epoch) > 900:
             lcd.move_to(0, 1)
-            lcd.putstr('Brak akt odczytu') #16 letters
+            lcd.putstr('{0:<{x}}'.format('Brak akt odczytu', x=LCD_CHARS)) #16 letters
             lcd.move_to(0, 2)
             lcd.putstr('{:<20}'.format(""))
             lcd.move_to(0, 3)
